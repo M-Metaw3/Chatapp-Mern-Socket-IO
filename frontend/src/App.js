@@ -1,49 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import io from 'socket.io-client';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-const socket = io(`http://localhost:10000/`);
-// const socket = io('https://your-domain.com:5000');
+import { AuthProvider } from "./contexts/AuthContext";
+import Register from "./components/accounts/Register";
+import Login from "./components/accounts/Login";
+import Profile from "./components/accounts/Profile";
+import WithPrivateRoute from "./utils/WithPrivateRoute";
+import ChatLayout from "./components/layouts/ChatLayout";
+import Header from "./components/layouts/Header";
+import ErrorMessage from "./components/layouts/ErrorMessage";
 
 function App() {
-  const [name, setName] = useState('');
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState([]);
-  useEffect(() => {
-    socket.on('chat message', (msg) => {
-      setMessages((prevMessages) => [...prevMessages, msg]);
-    });
-  }, []);
-  console.log(messages)
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    socket.emit('chat message', `${name}: ${message}`);
-    setMessage('');
-  };
-
   return (
-    <div>
-      <ul>
-      {messages?messages.map((msg, index) => (
-          <li >{msg.text}</li>
-        )):""}
-      </ul>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Enter your name"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Enter your message"
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-        />
-        <button type="submit">Send</button>
-      </form>
-    </div>
+    <AuthProvider>
+      <Router>
+        <Header />
+        <ErrorMessage />
+        <Routes>
+          <Route exact path="/register" element={<Register />} />
+          <Route exact path="/login" element={<Login />} />
+          <Route
+            exact
+            path="/profile"
+            element={
+              <WithPrivateRoute>
+                <Profile />
+              </WithPrivateRoute>
+            }
+          />
+          <Route
+            exact
+            path="/"
+            element={
+              <WithPrivateRoute>
+                <ChatLayout />
+              </WithPrivateRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 
